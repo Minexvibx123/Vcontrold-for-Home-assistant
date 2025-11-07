@@ -7,6 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryNotReady
 
+from .config_flow import VcontroledOptionsFlow
 from .const import (
     ATTR_MODE,
     ATTR_TEMPERATURE,
@@ -255,3 +256,20 @@ def _setup_services(hass: HomeAssistant, manager: VcontroledManager):
     )
     
     _LOGGER.debug("✅ Alle Services registriert")
+
+
+# Registriere Options Flow für nachträgliche Einstellungen
+async def async_setup_options_flow(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    """Richte Options Flow ein."""
+    config_entry.add_update_listener(async_update_options)
+
+
+async def async_update_options(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    """Update bei Optionen-Änderung."""
+    _LOGGER.debug("🔄 vcontrold Optionen aktualisiert")
+    await hass.config_entries.async_reload(config_entry.entry_id)
+
+
+# Registriere
+config_entry_cls = VcontroledConfigFlow
+options_flow_cls = VcontroledOptionsFlow

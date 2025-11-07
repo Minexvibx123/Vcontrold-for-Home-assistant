@@ -88,6 +88,14 @@
   - Komponenten-Übersicht
   - Feature-Liste
 
+- ✅ **GUI_DOCUMENTATION.md** - WebUI & Setup-Assistent
+  - Multi-Step Config Flow
+  - Alle GUI-Felder dokumentiert
+  - Screenshot-Beschreibungen
+  - Responsive Design
+  - Einstellungen nachträglich ändern
+  - Tips & Tricks
+
 ### 💡 Beispiel-Konfigurationen
 
 - ✅ **configuration.example.yaml**
@@ -249,7 +257,9 @@ Vcontrold-for-Home-assistant/
 │   ├── TROUBLESHOOTING.md           [250 Zeilen] 🔧 DEBUGGING
 │   ├── ARCHITECTURE.md              [350 Zeilen] 🏗️ TECHNIK
 │   ├── PROJECT_OVERVIEW.md          [200 Zeilen] 📊 ÜBERSICHT
-│   └── CHANGELOG.md                 [100 Zeilen] 📝 HISTORY
+│   ├── CHANGELOG.md                 [100 Zeilen] 📝 HISTORY
+│   ├── GUI_DOCUMENTATION.md         [150 Zeilen] 🎨 WebUI GUIDE
+│   └── ALL_IN_ONE_DOCS.md           [250 Zeilen] 🔄 ALL-IN-ONE
 │
 ├── ⚙️ Beispiel-Konfigurationen
 │   ├── configuration.example.yaml   [20 Zeilen] 
