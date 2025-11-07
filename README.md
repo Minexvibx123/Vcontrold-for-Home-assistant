@@ -1,53 +1,52 @@
-# Vcontrold-for-Home-Assistant
+# Vcontrold-for-Home-Assistant 🔧
 
-Custom Home Assistant Integration für die Viessmann-Heizungssteuerung mit lokalem **vcontrold** Daemon.
+**Custom Home Assistant Integration für Viessmann-Heizungssteuerung - ECHTE ALL-IN-ONE LÖSUNG**
 
-Diese Integration ermöglicht es dir, deine Viessmann-Heizung über Home Assistant zu überwachen und zu steuern - **ohne Cloud** und **ohne ViCare**!
+Diese Integration ermöglicht es dir, deine Viessmann-Heizung über Home Assistant zu überwachen und zu steuern:
+- ✅ **Voll integriert**: vcontrold läuft automatisch in Home Assistant
+- ✅ **Keine externe Installation**: Alles out-of-the-box
+- ✅ **Lokal verarbeitet**: Kein Cloud-Upload, kein ViCare Account
+- ✅ **Einfaches Setup**: Config Flow mit wenigen Klicks
 
 ## 🎯 Features
 
-- ✅ **TCP-Socket Kommunikation** mit vcontrold Daemon
-- ✅ **Automatische Datenabfrage** (konfigurierbar, Standard: 60 Sekunden)
-- ✅ **Caching-Mechanismus** zur Reduktion von Socket-Anfragen
-- ✅ **5 Temperatur-Sensoren** für umfassende Überwachung
-- ✅ **Service-Aufrufe** zum Steuern der Heizung
-- ✅ **Robuste Fehlerbehandlung** mit Timeout-Erkennung
-- ✅ **Mehrsprachig** (Deutsch & Englisch)
-- ✅ **Lokale Verarbeitung** - keine Cloud-Abhängigkeit
-- ✅ **🆕 Integrierte Daemon-Verwaltung** - vcontrold kann direkt in HA starten
-- ✅ **🆕 Non-Docker Support** - systemd, native Installation
+### Core Features
+- ✅ **5 Temperatur-Sensoren** für vollständige Überwachung
+  - Kesseltemperatur
+  - Außentemperatur
+  - Warmwasser-Solltemperatur
+  - Warmwasser-Isttemperatur
+  - Heizkreis-Vorlauftemperatur
+- ✅ **2 Service-Aufrufe** zur Heizungssteuerung
+  - Warmwasser-Solltemperatur setzen
+  - Betriebsart ändern (auto, standby, party, eco)
+- ✅ **Intelligent Caching** (30s TTL) zur Performance-Optimierung
+- ✅ **Robuste Fehlerbehandlung** mit Timeout-Schutz
+- ✅ **Health Checks** für Daemon-Überwachung
+
+### Architektur
+- 🔧 **All-in-One**: Home Assistant starten/stoppen Daemon automatisch
+- 🌐 **Hybrid**: Auch externe vcontrold Instanzentspürstbar
+- 📊 **Daemon Management**: Services für Daemon-Kontrolle
+- 🏥 **Health Monitoring**: Auto-Restart bei Ausfall
 
 ## 📋 Voraussetzungen
 
 ### Home Assistant
-- **Home Assistant** (mindestens Version 2024.1.0)
-- Läuft nativ auf Linux/macOS/Windows oder im Docker
-
-### vcontrold Daemon
-
-**Option 1: Integriert (Empfohlen)**
-- vcontrold Binary im Integration Verzeichnis
-- Wird automatisch von Home Assistant gestartet/gestoppt
-- Keine separate Installation notwendig
-
-**Option 2: Extern**
-- vcontrold läuft separat auf dem Netzwerk
-- Standard-Port: `localhost:3002`
-- Host und Port konfigurierbar
+- **Version**: Mindestens 2024.1.0
+- **Plattform**: Docker, HAOS oder native Linux/RPi
 
 ### Hardware
-- **Viessmann Heizungsanlage** mit vcontrold Unterstützung
-- **USB-Seriengerät** oder Netzwerkzugang zur Heizung
+- **Viessmann Heizungsanlage** (vcontrold-kompatibel)
+- **USB-Seriengerät** oder RS232-Zugang zur Heizung
 
-## 🔧 Installation
+### Software
+- **Automatisch**: vcontrold Binary wird automatisch genutzt (falls vorhanden)
+- **Alternativ**: Externe vcontrold Installation (optional)
 
-### 🆕 Installation für Non-Docker (Direktes System)
+## 🚀 Schnellstart (3 Minuten)
 
-Falls Home Assistant **nicht** in Docker läuft, sondern nativ auf dem System:
-
-#### 1. vcontrold Daemon installieren
-
-```bash
+### 1. Integration installieren
 # Debian/Ubuntu
 sudo apt-get install vcontrold
 

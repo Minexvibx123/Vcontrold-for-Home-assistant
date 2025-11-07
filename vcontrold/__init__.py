@@ -1,4 +1,4 @@
-"""Viessmann vcontrold Integration - All-in-One Lösung."""
+"""Viessmann vcontrold Integration - All-in-One Lösung mit integriertem Daemon."""
 import logging
 from typing import Final
 
@@ -24,7 +24,8 @@ from .const import (
     SERVICE_SET_TEMP_WW_SOLL,
     VALID_MODES,
 )
-from .heating_controller import ViessmannHeatingController
+from .daemon_manager import VcontroledDaemonManager
+from .vcontrold_manager import VcontroledManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,45 +36,68 @@ CONFIG_SCHEMA = None  # Wird durch Config Flow ersetzt
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Richte Integration ein."""
-    _LOGGER.debug("Richte vcontrold Integration (All-in-One) ein")
+    """Richte Integration ein - All-in-One mit integriertem Daemon."""
+    _LOGGER.debug("🔧 Richte vcontrold All-in-One Integration ein")
     
     device = entry.data.get(CONF_DEVICE, DEFAULT_DEVICE)
     framing = entry.data.get(CONF_FRAMING, DEFAULT_FRAMING)
-    update_interval = entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+    manage_daemon = entry.data.get("manage_daemon", True)  # Default: HA verwaltet Daemon
+    host = entry.data.get("host", "localhost")
+    port = entry.data.get("port", 3002)
     
-    # Initialisiere Heating Controller
-    controller = ViessmannHeatingController(
-        port=device,
-        framing=framing,
-        timeout=10,
-        cache_ttl=DEFAULT_CACHE_TTL,
-    )
+    # Speichere Manager im hass.data
+    hass.data.setdefault(DOMAIN, {})
+    
+    # Starte Daemon wenn aktiviert
+    if manage_daemon:
+        _LOGGER.info("📡 Starte integriertem vcontrold Daemon...")
+        daemon_manager = VcontroledDaemonManager(
+            config_dir=hass.config.path(),
+            device=device,
+            host=host,
+            port=port,
+        )
+        
+        # Versuche Daemon zu starten
+        daemon_started = await hass.async_add_executor_job(
+            daemon_manager.start_daemon
+        )
+        
+        if not daemon_started:
+            _LOGGER.error("❌ Konnte vcontrold Daemon nicht starten")
+            _LOGGER.error("💡 Bitte stelle sicher dass:")
+            _LOGGER.error("   1. vcontrold Binary existiert")
+            _LOGGER.error("   2. Serielles Gerät zugänglich ist")
+            _LOGGER.error("   3. Benutzer passende Berechtigungen hat")
+            raise ConfigEntryNotReady("vcontrold Daemon konnte nicht gestartet werden")
+        
+        hass.data[DOMAIN]["daemon_manager"] = daemon_manager
+        _LOGGER.info(f"✅ vcontrold Daemon läuft auf {host}:{port}")
+    
+    # Verbinde zum vcontrold (integriert oder extern)
+    manager = VcontroledManager(host=host, port=port)
     
     # Prüfe Verfügbarkeit
     try:
-        is_connected = await hass.async_add_executor_job(controller.connect)
-        if not is_connected:
-            _LOGGER.error(f"Heizung nicht erreichbar auf {device}")
-            raise ConfigEntryNotReady(f"Heizung nicht erreichbar auf {device}")
-        
-        # Trenne wieder (wird später bei jedem Update wieder verbunden)
-        await hass.async_add_executor_job(controller.disconnect)
+        is_available = await hass.async_add_executor_job(manager.is_available)
+        if not is_available:
+            error_msg = f"vcontrold nicht erreichbar auf {host}:{port}"
+            _LOGGER.error(f"❌ {error_msg}")
+            raise ConfigEntryNotReady(error_msg)
     except Exception as e:
-        _LOGGER.error(f"Fehler beim Verbindungstest: {e}")
+        _LOGGER.error(f"❌ Fehler beim Verbindungstest: {e}")
         raise ConfigEntryNotReady(f"Verbindungsfehler: {e}")
     
-    # Speichere Controller im hass.data
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = controller
+    # Speichere Manager
+    hass.data[DOMAIN][entry.entry_id] = manager
     
     # Registriere Services
-    _setup_services(hass, controller)
+    _setup_services(hass, manager)
     
     # Lade Plattformen
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
-    _LOGGER.info(f"vcontrold Integration erfolgreich eingerichtet (Gerät: {device})")
+    _LOGGER.info(f"✅ vcontrold Integration erfolgreich eingerichtet ({host}:{port})")
     return True
 
 
@@ -81,17 +105,24 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Entlade Integration."""
     _LOGGER.debug("Entlade vcontrold Integration")
     
+    # Stoppe Daemon wenn HA ihn verwaltet
+    daemon_manager = hass.data[DOMAIN].get("daemon_manager")
+    if daemon_manager:
+        await hass.async_add_executor_job(daemon_manager.stop_daemon)
+        _LOGGER.info("vcontrold Daemon gestoppt")
+    
     # Entlade Plattformen
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     
     if unload_ok:
-        controller: ViessmannHeatingController = hass.data[DOMAIN].pop(entry.entry_id)
-        controller.cleanup()
+        manager = hass.data[DOMAIN].pop(entry.entry_id, None)
+        if manager:
+            manager.cleanup()
     
     return unload_ok
 
 
-def _setup_services(hass: HomeAssistant, controller: ViessmannHeatingController):
+def _setup_services(hass: HomeAssistant, manager: VcontroledManager):
     """Registriere Custom Services."""
     
     async def handle_set_temp_ww_soll(call: ServiceCall) -> None:
@@ -103,13 +134,13 @@ def _setup_services(hass: HomeAssistant, controller: ViessmannHeatingController)
             return
         
         result = await hass.async_add_executor_job(
-            controller.set_temperature, "setTempWWsoll", float(temp)
+            manager.set_temperature, "setTempWWsoll", float(temp)
         )
         
         if result:
-            _LOGGER.info(f"Warmwasser-Solltemperatur auf {temp}°C gesetzt")
+            _LOGGER.info(f"✅ Warmwasser-Solltemperatur auf {temp}°C gesetzt")
         else:
-            _LOGGER.error(f"Fehler beim Setzen der Warmwasser-Solltemperatur")
+            _LOGGER.error(f"❌ Fehler beim Setzen der Warmwasser-Solltemperatur")
     
     async def handle_set_betriebsart(call: ServiceCall) -> None:
         """Handle Service zum Setzen der Betriebsart."""
@@ -120,13 +151,13 @@ def _setup_services(hass: HomeAssistant, controller: ViessmannHeatingController)
             return
         
         result = await hass.async_add_executor_job(
-            controller.set_operating_mode, mode
+            manager.set_operating_mode, mode
         )
         
         if result:
-            _LOGGER.info(f"Betriebsart auf {mode} gesetzt")
+            _LOGGER.info(f"✅ Betriebsart auf {mode} gesetzt")
         else:
-            _LOGGER.error(f"Fehler beim Setzen der Betriebsart")
+            _LOGGER.error(f"❌ Fehler beim Setzen der Betriebsart")
     
     hass.services.async_register(
         DOMAIN,
