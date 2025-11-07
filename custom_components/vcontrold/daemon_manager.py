@@ -55,43 +55,16 @@ class VcontroledDaemonManager:
         self._last_health_check: Optional[datetime] = None
 
     def _get_daemon_binary_path(self) -> Path:
-        """Bestimme Pfad zum vcontrold Binary - ALL-IN-ONE Lösung.
+        """Bestimme Pfad zum vcontrold Binary - HACS-kompatibel.
         
         Sucht nach Binaries in dieser Reihenfolge:
-        1. Integration-Ordner (bundled)
-        2. System PATH
-        3. User-installiert
+        1. Heruntergeladenes Binary (~/.vcontrold/vcontrold)
+        2. System PATH (/usr/bin/vcontrold, etc.)
         """
-        integration_dir = Path(__file__).parent
-        
-        # Zuerst in Integration suchen (bundled)
+        # Standard Pfad: ~/.vcontrold/vcontrold oder ~/.vcontrold/vcontrold.exe
         if self.is_windows:
-            bundled = integration_dir / "vcontrold" / "windows" / "vcontrold.exe"
-            if bundled.exists():
-                _LOGGER.debug(f"Nutze bundled Windows Binary: {bundled}")
-                return bundled
-            # System PATH Fallback
             return self.daemon_dir / "vcontrold.exe"
-        elif self.is_macos:
-            bundled = integration_dir / "vcontrold" / "macos" / "vcontrold"
-            if bundled.exists():
-                _LOGGER.debug(f"Nutze bundled macOS Binary: {bundled}")
-                return bundled
-            return self.daemon_dir / "vcontrold"
-        else:  # Linux
-            # ARM vs x86_64
-            machine = platform.machine()
-            if machine in ["armv7l", "armv6l", "aarch64"]:
-                bundled = integration_dir / "vcontrold" / "linux" / "vcontrold-arm"
-                if bundled.exists():
-                    _LOGGER.debug(f"Nutze bundled Linux ARM Binary: {bundled}")
-                    return bundled
-            else:
-                bundled = integration_dir / "vcontrold" / "linux" / "vcontrold"
-                if bundled.exists():
-                    _LOGGER.debug(f"Nutze bundled Linux x86_64 Binary: {bundled}")
-                    return bundled
-            # System PATH Fallback
+        else:  # Linux, macOS
             return self.daemon_dir / "vcontrold"
 
     def _ensure_daemon_dir(self) -> bool:
