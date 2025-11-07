@@ -1,0 +1,7 @@
+---
+# Home Assistant Add-on Repository Configuration
+# This file tells Home Assistant where and how to find your add-ons
+
+repositories:
+  - url: https://github.com/Minexvibx123/Vcontrold-for-Home-assistant
+    branch: main
