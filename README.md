@@ -2,6 +2,8 @@
 
 **Custom Home Assistant Integration für Viessmann-Heizungssteuerung - ECHTE ALL-IN-ONE LÖSUNG**
 
+⚡ **Installation:** Siehe [CUSTOM_INTEGRATION.md](CUSTOM_INTEGRATION.md) - Installiere über **HACS** oder manuell
+
 🔥 **Spezialisiert für Viessmann Vitotronic 300!** Siehe [VITOTRONIC_300.md](VITOTRONIC_300.md) für Vitotronic 300 spezifische Anleitung.
 
 Diese Integration ermöglicht es dir, deine Viessmann-Heizung über Home Assistant zu überwachen und zu steuern:
