@@ -1,7 +1,7 @@
 {
   "2.0.0": {
-    "commit": "e533d71",
+    "commit": "58646e2",
     "date": "2025-11-07",
-    "notes": "Initial HACS release - Full Viessmann vcontrold integration with Vitotronic 300 support"
+    "notes": "Initial HACS release - Full Viessmann vcontrold integration with Vitotronic 300 support, HACS validation workflow included"
   }
 }
