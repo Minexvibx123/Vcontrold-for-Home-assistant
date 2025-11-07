@@ -1,6 +1,6 @@
 {
   "domain": "vcontrold",
-  "name": "Viessmann vcontrold - All-in-One 🔧",
+  "name": "Viessmann vcontrold - All-in-One",
   "codeowners": ["@Minexvibx123"],
   "config_flow": true,
   "documentation": "https://github.com/Minexvibx123/Vcontrold-for-Home-assistant",
