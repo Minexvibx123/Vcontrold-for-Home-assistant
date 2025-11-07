@@ -1,4 +1,4 @@
-"""Config Flow für vcontrold Integration - All-in-One mit erweiterter GUI."""
+"""Config Flow für vcontrold Integration - Viessmann Vitotronic 300 optimiert."""
 import logging
 from typing import Any, Dict, Optional
 
@@ -11,10 +11,17 @@ from homeassistant.data_entry_flow import FlowResult
 from .const import (
     CONF_DEVICE,
     CONF_FRAMING,
+    CONF_HEATER_MODEL,
+    CONF_LOG_LEVEL,
     DEFAULT_DEVICE,
     DEFAULT_FRAMING,
     DEFAULT_UPDATE_INTERVAL,
+    DEFAULT_HEATER_MODEL,
+    DEFAULT_LOG_LEVEL,
     DOMAIN,
+    FRAMING_OPTIONS,
+    HEATER_MODELS,
+    LOG_LEVELS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,7 +47,7 @@ class VcontroledConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             manage_daemon = user_input.get("manage_daemon", True)
             
             if manage_daemon:
-                return await self.async_step_ha_managed_device()
+                return await self.async_step_select_heater_model()
             else:
                 return await self.async_step_external_connection()
         
@@ -58,6 +65,28 @@ class VcontroledConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=data_schema,
             description_placeholders={
                 "docs_url": "https://github.com/Minexvibx123/Vcontrold-for-Home-assistant",
+            },
+        )
+    
+    async def async_step_select_heater_model(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Step 1b: Heizungsmodell auswählen (spezialisiert auf Vitotronic 300)."""
+        if user_input is not None:
+            self.context["heater_model"] = user_input.get(CONF_HEATER_MODEL, DEFAULT_HEATER_MODEL)
+            return await self.async_step_ha_managed_device()
+        
+        data_schema = vol.Schema(
+            {
+                vol.Required(CONF_HEATER_MODEL, default=DEFAULT_HEATER_MODEL): vol.In(HEATER_MODELS),
+            }
+        )
+        
+        return self.async_show_form(
+            step_id="select_heater_model",
+            data_schema=data_schema,
+            description_placeholders={
+                "model_info": "Wähle dein Viessmann Heizungsmodell für optimale Konfiguration",
             },
         )
     
@@ -122,7 +151,7 @@ class VcontroledConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_ha_managed_advanced(
         self, user_input: Optional[Dict[str, Any]] = None
     ) -> FlowResult:
-        """Step 2c: Erweiterte Einstellungen."""
+        """Step 2c: Erweiterte Einstellungen für Vitotronic 300."""
         errors: Dict[str, str] = {}
         
         if user_input is not None:
@@ -130,18 +159,20 @@ class VcontroledConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             device = self.context.get(CONF_DEVICE, DEFAULT_DEVICE)
             host = self.context.get("host", "localhost")
             port = self.context.get("port", 3002)
+            heater_model = self.context.get(CONF_HEATER_MODEL, DEFAULT_HEATER_MODEL)
             
             # Neue Daten
             update_interval = user_input.get("update_interval", DEFAULT_UPDATE_INTERVAL)
-            log_level = user_input.get("log_level", "ERROR")
+            log_level = user_input.get("log_level", DEFAULT_LOG_LEVEL)
             framing = user_input.get(CONF_FRAMING, DEFAULT_FRAMING)
             
             return self.async_create_entry(
-                title="🔧 Viessmann vcontrold (All-in-One)",
+                title=f"� Viessmann vcontrold - {HEATER_MODELS.get(heater_model, 'Heizung')}",
                 data={
                     "manage_daemon": True,
                     CONF_DEVICE: device,
                     CONF_FRAMING: framing,
+                    CONF_HEATER_MODEL: heater_model,
                     "host": host,
                     "port": port,
                     "update_interval": update_interval,
@@ -155,20 +186,12 @@ class VcontroledConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Coerce(int),
                     vol.Range(min=30, max=300),
                 ),
-                vol.Required("log_level", default="ERROR"): vol.In({
-                    "ERROR": "🔴 ERROR (nur Fehler)",
-                    "WARN": "🟡 WARN (Warnungen)",
-                    "INFO": "🔵 INFO (Informationen)",
-                    "DEBUG": "🟣 DEBUG (Alle Details)",
-                }),
-                vol.Optional(CONF_FRAMING, default=DEFAULT_FRAMING): vol.In({
-                    "kw": "KW Protokoll (Standard - meist kompatibel)",
-                    "raw": "Raw Protokoll",
-                    "framing": "Framing Protokoll",
-                }),
+                vol.Required("log_level", default=DEFAULT_LOG_LEVEL): vol.In(LOG_LEVELS),
+                vol.Optional(CONF_FRAMING, default=DEFAULT_FRAMING): vol.In(FRAMING_OPTIONS),
             }
         )
         
+
         return self.async_show_form(
             step_id="ha_managed_advanced",
             data_schema=data_schema,
