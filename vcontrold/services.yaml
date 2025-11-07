@@ -30,3 +30,22 @@ set_betriebsart:
             - standby
             - party
             - eco
+
+start_daemon:
+  name: Daemon starten
+  description: Starte vcontrold Daemon
+  fields:
+    device:
+      name: Serielles Gerät
+      description: Optional serielles Gerät (z.B. /dev/ttyUSB0)
+      example: /dev/ttyUSB0
+      selector:
+        text:
+
+stop_daemon:
+  name: Daemon stoppen
+  description: Stoppe vcontrold Daemon
+
+check_status:
+  name: Daemon Status prüfen
+  description: Prüfe den aktuellen Status des vcontrold Daemons

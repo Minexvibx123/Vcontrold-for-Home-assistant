@@ -159,6 +159,87 @@ def _setup_services(hass: HomeAssistant, manager: VcontroledManager):
         else:
             _LOGGER.error(f"❌ Fehler beim Setzen der Betriebsart")
     
+    # Daemon Management Services (wenn HA Daemon verwaltet)
+    daemon_manager = hass.data[DOMAIN].get("daemon_manager")
+    
+    if daemon_manager:
+        async def handle_start_daemon(call: ServiceCall) -> None:
+            """Service zum Starten des Daemons."""
+            device = call.data.get("device")
+            result = await hass.async_add_executor_job(
+                daemon_manager.start_daemon, device
+            )
+            
+            if result:
+                _LOGGER.info("✅ vcontrold Daemon gestartet")
+                await hass.async_create_task(
+                    hass.components.persistent_notification.async_create(
+                        "vcontrold Daemon wurde erfolgreich gestartet",
+                        title="🚀 Daemon Started"
+                    )
+                )
+            else:
+                _LOGGER.error("❌ vcontrold Daemon konnte nicht gestartet werden")
+        
+        async def handle_stop_daemon(call: ServiceCall) -> None:
+            """Service zum Stoppen des Daemons."""
+            result = await hass.async_add_executor_job(
+                daemon_manager.stop_daemon
+            )
+            
+            if result:
+                _LOGGER.info("✅ vcontrold Daemon gestoppt")
+            else:
+                _LOGGER.error("❌ vcontrold Daemon konnte nicht gestoppt werden")
+        
+        async def handle_check_status(call: ServiceCall) -> None:
+            """Service zum Prüfen des Daemon-Status."""
+            status = daemon_manager.get_daemon_status()
+            health_ok = await daemon_manager.health_check()
+            
+            status_text = "✅ OK" if health_ok else "⚠️ ERROR"
+            message = f"""
+**vcontrold Daemon Status: {status_text}**
+
+- Läuft: {'🟢 Ja' if status['running'] else '🔴 Nein'}
+- PID: {status['pid'] or 'N/A'}
+- Binary: {status['binary_exists']}
+- Uptime: {int(status['uptime_seconds']) if status['uptime_seconds'] else 0}s
+- Device: {status['config']['device']}
+- Listen: {status['config']['host']}:{status['config']['port']}
+- Health Checks: {status['health_checks']}
+            """
+            
+            await hass.async_create_task(
+                hass.components.persistent_notification.async_create(
+                    message.strip(),
+                    title="📊 vcontrold Status"
+                )
+            )
+        
+        hass.services.async_register(
+            DOMAIN,
+            "start_daemon",
+            handle_start_daemon,
+            description="Starte vcontrold Daemon",
+        )
+        
+        hass.services.async_register(
+            DOMAIN,
+            "stop_daemon",
+            handle_stop_daemon,
+            description="Stoppe vcontrold Daemon",
+        )
+        
+        hass.services.async_register(
+            DOMAIN,
+            "check_status",
+            handle_check_status,
+            description="Prüfe vcontrold Daemon Status",
+        )
+        
+        _LOGGER.debug("Daemon Management Services registriert")
+    
     hass.services.async_register(
         DOMAIN,
         SERVICE_SET_TEMP_WW_SOLL,
@@ -173,4 +254,4 @@ def _setup_services(hass: HomeAssistant, manager: VcontroledManager):
         description="Setze Betriebsart (auto, standby, party, eco)",
     )
     
-    _LOGGER.debug("Services registriert")
+    _LOGGER.debug("✅ Alle Services registriert")
