@@ -12,6 +12,13 @@ import signal
 
 _LOGGER = logging.getLogger(__name__)
 
+# Import Binary Manager (optional - nur für Download)
+try:
+    from .binary_manager import download_binary
+    HAS_BINARY_MANAGER = True
+except ImportError:
+    HAS_BINARY_MANAGER = False
+
 
 class VcontroledDaemonManager:
     """Manager für vcontrold Daemon Prozess - All-in-One Integration."""
@@ -112,14 +119,46 @@ class VcontroledDaemonManager:
             return False
 
     async def _verify_binary(self) -> bool:
-        """Überprüfe ob Binary vorhanden und ausführbar ist."""
+        """Überprüfe ob Binary vorhanden und ausführbar ist.
+        
+        Falls nicht vorhanden: Versuche herunterzuladen.
+        """
         if not self.daemon_binary.exists():
-            _LOGGER.error(f"vcontrold Binary nicht gefunden: {self.daemon_binary}")
-            return False
+            _LOGGER.warning(f"🔍 vcontrold Binary nicht gefunden: {self.daemon_binary}")
+            
+            # Versuche herunterzuladen
+            if HAS_BINARY_MANAGER:
+                _LOGGER.info("📥 Versuche vcontrold herunterzuladen...")
+                
+                # Bestimme Plattform
+                machine = platform.machine()
+                if self.is_linux:
+                    if machine in ["armv7l", "armv6l", "aarch64"]:
+                        platform_str = "linux_arm"
+                    else:
+                        platform_str = "linux"
+                elif self.is_windows:
+                    platform_str = "windows"
+                else:
+                    _LOGGER.error("❌ Plattform wird nicht unterstützt für Auto-Download")
+                    return False
+                
+                # Download
+                downloaded = await download_binary(self.daemon_dir.parent, platform_str)
+                if downloaded:
+                    self.daemon_binary = downloaded
+                    _LOGGER.info(f"✅ Binary heruntergeladen: {self.daemon_binary}")
+                else:
+                    _LOGGER.error("❌ Konnte Binary nicht herunterladen")
+                    return False
+            else:
+                _LOGGER.error(f"❌ vcontrold Binary nicht gefunden: {self.daemon_binary}")
+                _LOGGER.error("   Bitte installiere vcontrold oder verwende die Bundled-Version")
+                return False
         
         # Mache ausführbar
         if not self._make_executable(self.daemon_binary):
-            _LOGGER.warning("Konnte Binary nicht ausführbar machen")
+            _LOGGER.warning("⚠️ Konnte Binary nicht ausführbar machen")
             # Trotzdem versuchen zu starten
         
         _LOGGER.info(f"✅ vcontrold Binary gefunden: {self.daemon_binary}")
