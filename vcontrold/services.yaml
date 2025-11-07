@@ -1,0 +1,32 @@
+set_temp_ww_soll:
+  name: Warmwasser-Solltemperatur setzen
+  description: Setze die Solltemperatur für Warmwasser
+  fields:
+    temperature:
+      name: Temperatur
+      description: Zieltemperatur in Celsius (20-80°C)
+      required: true
+      example: 55
+      selector:
+        number:
+          min: 20
+          max: 80
+          step: 1
+          unit_of_measurement: "°C"
+
+set_betriebsart:
+  name: Betriebsart setzen
+  description: Ändere die Betriebsart der Heizung
+  fields:
+    mode:
+      name: Betriebsart
+      description: Betriebsart (auto, standby, party, eco)
+      required: true
+      example: auto
+      selector:
+        select:
+          options:
+            - auto
+            - standby
+            - party
+            - eco

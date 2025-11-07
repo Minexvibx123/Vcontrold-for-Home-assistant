@@ -1,0 +1,19 @@
+# Beispiel configuration.yaml für Home Assistant mit vcontrold Integration
+
+# vcontrold Integration
+vcontrold:
+  host: localhost      # IP oder Hostname des vcontrold Daemons
+  port: 3002           # Port des vcontrold Daemons
+  update_interval: 60  # Update-Intervall in Sekunden
+
+# Logging (optional - für Debugging)
+logger:
+  default: info
+  logs:
+    custom_components.vcontrold: debug
+
+# Automationen Beispiel
+automation: !include automations.yaml
+
+# Scripts Beispiel
+script: !include scripts.yaml

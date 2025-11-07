@@ -1,0 +1,165 @@
+# Scripts Beispiele für vcontrold Integration
+
+# Script 1: Komfortmodus - erhöhte Wärme
+komfort_modus:
+  alias: "Komfort-Modus"
+  description: "Aktiviere Komfort-Mode mit erhöhten Temperaturen"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: auto
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 65
+    - service: persistent_notification.create
+      data:
+        title: "🔥 Komfort-Modus aktiviert"
+        message: "Warmwasser-Solltemperatur: 65°C, Betriebsart: Auto"
+
+# Script 2: Sparmode - reduzierte Wärme
+spar_modus:
+  alias: "Spar-Modus"
+  description: "Aktiviere Spar-Mode mit reduzierten Temperaturen"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: eco
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 45
+    - service: persistent_notification.create
+      data:
+        title: "💰 Spar-Modus aktiviert"
+        message: "Warmwasser-Solltemperatur: 45°C, Betriebsart: Eco"
+
+# Script 3: Party-Modus - Gäste kommen
+party_mode:
+  alias: "Party-Modus"
+  description: "Bereite Haus für Gäste vor"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: party
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 65
+    - service: persistent_notification.create
+      data:
+        title: "🎉 Party-Modus aktiviert"
+        message: "Willkommen! Heizung und Warmwasser sind bereit."
+
+# Script 4: Warmwasser-Boost für Dusche
+warmwasser_boost:
+  alias: "Warmwasser-Boost"
+  description: "Erhöhe Warmwasser kurzzeitig für Dusche"
+  sequence:
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 70
+    - service: persistent_notification.create
+      data:
+        title: "💧 Warmwasser-Boost"
+        message: "Warmwasser wird für 30 Minuten auf 70°C erhöht"
+    - delay: "00:30:00"
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 55
+    - service: persistent_notification.create
+      data:
+        title: "💧 Warmwasser-Boost beendet"
+        message: "Warmwasser zurück auf normal: 55°C"
+
+# Script 5: Morgenroutine
+morgenroutine:
+  alias: "Morgenroutine"
+  description: "Vorbereitung für den Tag"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: auto
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 65
+    - service: persistent_notification.create
+      data:
+        title: "🌅 Guten Morgen!"
+        message: "Heizung und Warmwasser sind bereit."
+
+# Script 6: Nachtruhe
+nachtruhe:
+  alias: "Nachtruhe"
+  description: "Vorbereitung für die Nacht"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: eco
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 45
+    - service: persistent_notification.create
+      data:
+        title: "🌙 Gute Nacht!"
+        message: "Heizung auf Eco-Mode, Warmwasser auf 45°C"
+
+# Script 7: Verlasse das Haus
+verlasse_haus:
+  alias: "Verlasse das Haus"
+  description: "Energiesparende Einstellungen beim Verlassen"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: standby
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 40
+    - service: persistent_notification.create
+      data:
+        title: "👋 Auf Wiedersehen!"
+        message: "Heizung auf Standby, Haus ist im Energiesparmodus"
+
+# Script 8: Willkommen zu Hause
+komme_heim:
+  alias: "Komme nach Hause"
+  description: "Aktiviere Komforteinstellungen"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: auto
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 60
+    - service: persistent_notification.create
+      data:
+        title: "👋 Willkommen zu Hause!"
+        message: "Heizung und Warmwasser sind bereit."
+
+# Script 9: Status-Report
+status_report:
+  alias: "Heizungs-Status Report"
+  description: "Zeige aktuellen Status aller Sensoren"
+  sequence:
+    - service: persistent_notification.create
+      data:
+        title: "📊 Heizungs-Status Report"
+        message: |
+          Kesseltemperatur: {{ states('sensor.kesseltemperatur') }}°C
+          Außentemperatur: {{ states('sensor.aussentemperatur') }}°C
+          WW-Solltemperatur: {{ states('sensor.warmwasser_solltemperatur') }}°C
+          WW-Isttemperatur: {{ states('sensor.warmwasser_isttemperatur') }}°C
+          Heizkreis-Vorlauf: {{ states('sensor.heizkreis_vorlauftemperatur') }}°C
+
+# Script 10: Notfall-Modus (maximale Wärme)
+notfall_modus:
+  alias: "Notfall-Modus"
+  description: "Maximale Wärmeerzeugung im Notfall"
+  sequence:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: auto
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 80
+    - service: persistent_notification.create
+      data:
+        title: "🚨 NOTFALL-MODUS AKTIVIERT"
+        message: "Maximale Wärmeerzeugung aktiviert! Überprüfe die Heizung!"

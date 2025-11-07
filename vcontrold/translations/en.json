@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "vcontrold Configuration",
+        "description": "Connect to your vcontrold daemon",
+        "data": {
+          "host": "Hostname or IP Address",
+          "port": "Port",
+          "update_interval": "Update Interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to vcontrold",
+      "unknown": "Unknown error"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "kesseltemperatur": {
+        "name": "Boiler Temperature"
+      },
+      "aussentemperatur": {
+        "name": "Outside Temperature"
+      },
+      "warmwasser_solltemperatur": {
+        "name": "Hot Water Target Temperature"
+      },
+      "warmwasser_isttemperatur": {
+        "name": "Hot Water Actual Temperature"
+      },
+      "heizkreis_vorlauftemperatur": {
+        "name": "Heating Circuit Flow Temperature"
+      }
+    }
+  }
+}

@@ -1,0 +1,200 @@
+# Automationen Beispiele für vcontrold Integration
+
+# Beispiel 1: Warmwasser bei Sonnenaufgang aktivieren
+- id: warmwasser_sonnenaufgang
+  alias: "Warmwasser bei Sonnenaufgang"
+  description: "Erhöhe Warmwasser-Solltemperatur bei Sonnenaufgang"
+  trigger:
+    platform: sun
+    event: sunrise
+  action:
+    service: vcontrold.set_temp_ww_soll
+    data:
+      temperature: 60
+
+# Beispiel 2: Warmwasser vor Sonnenuntergang reduzieren
+- id: warmwasser_sonnenuntergang
+  alias: "Warmwasser vor Sonnenuntergang reduzieren"
+  trigger:
+    platform: sun
+    event: sunset
+  action:
+    service: vcontrold.set_temp_ww_soll
+    data:
+      temperature: 50
+
+# Beispiel 3: Eco-Modus nachts (22 Uhr)
+- id: eco_modus_nacht
+  alias: "Eco-Modus nachts"
+  description: "Setze Betriebsart auf Eco um 22 Uhr"
+  trigger:
+    platform: time
+    at: "22:00:00"
+  action:
+    service: vcontrold.set_betriebsart
+    data:
+      mode: eco
+
+# Beispiel 4: Auto-Modus am Morgen (06 Uhr)
+- id: auto_modus_morgen
+  alias: "Auto-Modus am Morgen"
+  description: "Setze Betriebsart auf Auto um 06 Uhr"
+  trigger:
+    platform: time
+    at: "06:00:00"
+  action:
+    service: vcontrold.set_betriebsart
+    data:
+      mode: auto
+
+# Beispiel 5: Party-Modus vor Besuch
+- id: party_modus_besuch
+  alias: "Party-Modus für Besuch"
+  description: "Aktiviere Party-Modus 30 Minuten vor geplanntem Besuch"
+  trigger:
+    platform: time
+    at: "17:30:00"
+  condition:
+    condition: time
+    weekday:
+      - fri
+      - sat
+  action:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: party
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 65
+
+# Beispiel 6: Dynamische Warmwasser-Temperatur basierend auf Außentemperatur
+- id: warmwasser_temperatur_dynamisch
+  alias: "Warmwasser-Temperatur basierend auf Außentemperatur"
+  description: "Passe Warmwasser-Solltemperatur an Außentemperatur an"
+  trigger:
+    platform: state
+    entity_id: sensor.aussentemperatur
+  action:
+    choose:
+      # Sehr kalt (unter 5°C) - höhere Temperatur
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.aussentemperatur
+            below: 5
+        sequence:
+          - service: vcontrold.set_temp_ww_soll
+            data:
+              temperature: 65
+      
+      # Kalt (5-15°C) - mittlere Temperatur
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.aussentemperatur
+            below: 15
+          - condition: numeric_state
+            entity_id: sensor.aussentemperatur
+            above_eq: 5
+        sequence:
+          - service: vcontrold.set_temp_ww_soll
+            data:
+              temperature: 60
+      
+      # Mild (15-20°C) - normale Temperatur
+      - conditions:
+          - condition: numeric_state
+            entity_id: sensor.aussentemperatur
+            below: 20
+          - condition: numeric_state
+            entity_id: sensor.aussentemperatur
+            above_eq: 15
+        sequence:
+          - service: vcontrold.set_temp_ww_soll
+            data:
+              temperature: 55
+      
+      # Warm (über 20°C) - niedrige Temperatur
+      - default:
+          - service: vcontrold.set_temp_ww_soll
+            data:
+              temperature: 50
+
+# Beispiel 7: Benachrichtigung bei hoher Kesseltemperatur
+- id: alarm_hohe_kesseltemperatur
+  alias: "Alarm bei hoher Kesseltemperatur"
+  description: "Benachrichtigung wenn Kesseltemperatur über 90°C"
+  trigger:
+    platform: numeric_state
+    entity_id: sensor.kesseltemperatur
+    above: 90
+  action:
+    - service: persistent_notification.create
+      data:
+        title: "⚠️ Warnung: Hohe Kesseltemperatur"
+        message: "Die Kesseltemperatur beträgt {{ states('sensor.kesseltemperatur') }}°C"
+
+# Beispiel 8: Logging der Kesseltemperatur
+- id: log_kesseltemperatur
+  alias: "Kesseltemperatur Logger"
+  description: "Protokolliere Kesseltemperatur täglich um 20 Uhr"
+  trigger:
+    platform: time
+    at: "20:00:00"
+  action:
+    - service: logger.set_level
+      data:
+        custom_components.vcontrold: debug
+
+# Beispiel 9: Warmwasser-Boost am Morgen
+- id: warmwasser_boost_morgen
+  alias: "Warmwasser-Boost am Morgen"
+  description: "Erhöhe Warmwasser auf 70°C von 06:00 bis 07:00"
+  trigger:
+    platform: time
+    at: "06:00:00"
+  action:
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 70
+
+- id: warmwasser_boost_reduzierung
+  alias: "Warmwasser-Boost Reduzierung"
+  description: "Reduziere Warmwasser nach Boost-Phase"
+  trigger:
+    platform: time
+    at: "07:00:00"
+  action:
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 55
+
+# Beispiel 10: Heizung auf Standby bei Urlaubsmode
+- id: heizung_urlaubsmode
+  alias: "Heizung in Urlaubsmode"
+  description: "Setze Heizung auf Standby wenn Urlaubsmode aktiviert"
+  trigger:
+    platform: state
+    entity_id: input_boolean.vacation_mode
+    to: 'on'
+  action:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: standby
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 40
+
+# Beispiel 11: Heizung zurück zu Auto-Modus bei Rückkehr
+- id: heizung_rueckzug_auto
+  alias: "Heizung zurück zu Auto-Modus"
+  description: "Setze Heizung zurück auf Auto wenn Urlaubsmode deaktiviert"
+  trigger:
+    platform: state
+    entity_id: input_boolean.vacation_mode
+    to: 'off'
+  action:
+    - service: vcontrold.set_betriebsart
+      data:
+        mode: auto
+    - service: vcontrold.set_temp_ww_soll
+      data:
+        temperature: 55
