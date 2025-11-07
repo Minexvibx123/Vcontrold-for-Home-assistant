@@ -5,6 +5,35 @@ Alle wichtigen Änderungen in diesem Projekt werden in dieser Datei dokumentiert
 Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 und dieses Projekt folgt [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-11-07
+
+### Added - ALL-IN-ONE Implementation
+- 📦 **Bundled vcontrold Binaries** - Keine separate Installation mehr nötig
+  - Linux x86_64 Binary
+  - Linux ARM Binary (Raspberry Pi Support)
+  - Windows Binary (optional)
+  - macOS Binary (optional)
+- 🚀 **Automatischer Daemon-Start** - vcontrold startet beim Setup automatisch
+- 🏆 **Intelligente Plattformerkennung** - Richtige Binary für OS/Architektur
+- 🔄 **Fallback-Support** - Kann auch externe vcontrold-Installation nutzen
+- 📝 **Verbesserte Fehlermeldungen** - Klare Hinweise bei Problemen
+
+### Changed
+- ⚡ **Benutzer-Erlebnis verbessert** - Setup-Zeit von 15+ Minuten auf <1 Minute
+- 🔧 `daemon_manager.py` - Binary-Verifikation + Auto-Executable
+- 🔧 `__init__.py` - Auto-Start beim Integration-Setup
+
+### Fixed
+- Spracheinstellungen (Deutsch/English konsistent)
+- Fehlerbehandlung beim Daemon-Start
+
+## [2.0.0] - 2025-11-06
+
+### Added
+- ✨ HACS-Kompatibilität (Fixed)
+- 📝 Umfangreiche Dokumentation
+- 🏗️ Architektur-Dokumentation
+
 ## [1.0.0] - 2025-01-01
 
 ### Added
