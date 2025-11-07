@@ -49,7 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Speichere Manager im hass.data
     hass.data.setdefault(DOMAIN, {})
     
-    # Starte Daemon wenn aktiviert
+    # Starte Daemon wenn aktiviert (ALL-IN-ONE)
     if manage_daemon:
         _LOGGER.info("📡 Starte integriertem vcontrold Daemon...")
         daemon_manager = VcontroledDaemonManager(
@@ -59,17 +59,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             port=port,
         )
         
-        # Versuche Daemon zu starten
-        daemon_started = await hass.async_add_executor_job(
-            daemon_manager.start_daemon
+        # Versuche Daemon zu starten (async)
+        daemon_started = await daemon_manager.start_daemon(
+            device=device,
+            host=host,
+            port=port,
+            log_level="ERROR"
         )
         
         if not daemon_started:
             _LOGGER.error("❌ Konnte vcontrold Daemon nicht starten")
-            _LOGGER.error("💡 Bitte stelle sicher dass:")
-            _LOGGER.error("   1. vcontrold Binary existiert")
-            _LOGGER.error("   2. Serielles Gerät zugänglich ist")
-            _LOGGER.error("   3. Benutzer passende Berechtigungen hat")
+            _LOGGER.error("💡 Mögliche Lösungen:")
+            _LOGGER.error("   1. Überprüfe serielles Gerät: %s", device)
+            _LOGGER.error("   2. Stelle sicher dass Benutzer Zugriff hat")
+            _LOGGER.error("   3. Prüfe vcontrold Logs für Details")
             raise ConfigEntryNotReady("vcontrold Daemon konnte nicht gestartet werden")
         
         hass.data[DOMAIN]["daemon_manager"] = daemon_manager

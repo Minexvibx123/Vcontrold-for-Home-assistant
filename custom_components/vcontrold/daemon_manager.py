@@ -48,13 +48,44 @@ class VcontroledDaemonManager:
         self._last_health_check: Optional[datetime] = None
 
     def _get_daemon_binary_path(self) -> Path:
-        """Bestimme Pfad zum vcontrold Binary."""
+        """Bestimme Pfad zum vcontrold Binary - ALL-IN-ONE Lösung.
+        
+        Sucht nach Binaries in dieser Reihenfolge:
+        1. Integration-Ordner (bundled)
+        2. System PATH
+        3. User-installiert
+        """
+        integration_dir = Path(__file__).parent
+        
+        # Zuerst in Integration suchen (bundled)
         if self.is_windows:
+            bundled = integration_dir / "vcontrold" / "windows" / "vcontrold.exe"
+            if bundled.exists():
+                _LOGGER.debug(f"Nutze bundled Windows Binary: {bundled}")
+                return bundled
+            # System PATH Fallback
             return self.daemon_dir / "vcontrold.exe"
         elif self.is_macos:
-            return self.daemon_dir / "vcontrold_macos"
+            bundled = integration_dir / "vcontrold" / "macos" / "vcontrold"
+            if bundled.exists():
+                _LOGGER.debug(f"Nutze bundled macOS Binary: {bundled}")
+                return bundled
+            return self.daemon_dir / "vcontrold"
         else:  # Linux
-            return self.daemon_dir / "vcontrold_linux"
+            # ARM vs x86_64
+            machine = platform.machine()
+            if machine in ["armv7l", "armv6l", "aarch64"]:
+                bundled = integration_dir / "vcontrold" / "linux" / "vcontrold-arm"
+                if bundled.exists():
+                    _LOGGER.debug(f"Nutze bundled Linux ARM Binary: {bundled}")
+                    return bundled
+            else:
+                bundled = integration_dir / "vcontrold" / "linux" / "vcontrold"
+                if bundled.exists():
+                    _LOGGER.debug(f"Nutze bundled Linux x86_64 Binary: {bundled}")
+                    return bundled
+            # System PATH Fallback
+            return self.daemon_dir / "vcontrold"
 
     def _ensure_daemon_dir(self) -> bool:
         """Stelle sicher dass Daemon Verzeichnis existiert."""
@@ -65,6 +96,34 @@ class VcontroledDaemonManager:
         except Exception as e:
             _LOGGER.error(f"Fehler beim Erstellen des Daemon Verzeichnisses: {e}")
             return False
+
+    def _make_executable(self, path: Path) -> bool:
+        """Mache Binary ausführbar (Unix)."""
+        if self.is_windows:
+            return True  # Windows braucht das nicht
+        try:
+            import stat
+            current_permissions = path.stat().st_mode
+            path.chmod(current_permissions | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+            _LOGGER.debug(f"Binary ausführbar gemacht: {path}")
+            return True
+        except Exception as e:
+            _LOGGER.error(f"Fehler beim Ändern der Berechtigungen: {e}")
+            return False
+
+    async def _verify_binary(self) -> bool:
+        """Überprüfe ob Binary vorhanden und ausführbar ist."""
+        if not self.daemon_binary.exists():
+            _LOGGER.error(f"vcontrold Binary nicht gefunden: {self.daemon_binary}")
+            return False
+        
+        # Mache ausführbar
+        if not self._make_executable(self.daemon_binary):
+            _LOGGER.warning("Konnte Binary nicht ausführbar machen")
+            # Trotzdem versuchen zu starten
+        
+        _LOGGER.info(f"✅ vcontrold Binary gefunden: {self.daemon_binary}")
+        return True
 
     async def start_daemon(
         self,
@@ -94,6 +153,11 @@ class VcontroledDaemonManager:
         port = port or self.port
         
         if not self._ensure_daemon_dir():
+            return False
+
+        # Verifiziere dass Binary vorhanden ist (ALL-IN-ONE)
+        if not await self._verify_binary():
+            _LOGGER.error("vcontrold Binary nicht verfügbar - Installation erforderlich")
             return False
 
         try:
