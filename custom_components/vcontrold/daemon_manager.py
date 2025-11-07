@@ -103,18 +103,24 @@ class VcontroledDaemonManager:
             if HAS_BINARY_MANAGER:
                 _LOGGER.info("📥 Versuche vcontrold herunterzuladen...")
                 
-                # Bestimme Plattform
+                # Bestimme Plattform für korrekten Download
                 machine = platform.machine()
                 if self.is_linux:
-                    if machine in ["armv7l", "armv6l", "aarch64"]:
-                        platform_str = "linux_arm"
-                    else:
+                    if machine in ["aarch64"]:
+                        platform_str = "linux_arm64"
+                    elif machine in ["armv7l", "armv6l"]:
+                        platform_str = "linux_armhf"
+                    else:  # x86_64, i686, etc.
                         platform_str = "linux"
                 elif self.is_windows:
                     platform_str = "windows"
+                elif self.is_macos:
+                    platform_str = "linux"  # macOS kompatibel mit x86_64
                 else:
                     _LOGGER.error("❌ Plattform wird nicht unterstützt für Auto-Download")
                     return False
+                
+                _LOGGER.info(f"   Platform: {machine} -> {platform_str}")
                 
                 # Download
                 downloaded = await download_binary(self.daemon_dir.parent, platform_str)
@@ -126,7 +132,7 @@ class VcontroledDaemonManager:
                     return False
             else:
                 _LOGGER.error(f"❌ vcontrold Binary nicht gefunden: {self.daemon_binary}")
-                _LOGGER.error("   Bitte installiere vcontrold oder verwende die Bundled-Version")
+                _LOGGER.error("   Installiere vcontrold: sudo apt-get install vcontrold")
                 return False
         
         # Mache ausführbar
