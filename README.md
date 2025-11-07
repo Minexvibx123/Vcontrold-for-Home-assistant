@@ -2,11 +2,14 @@
 
 **Custom Home Assistant Integration für Viessmann-Heizungssteuerung - ECHTE ALL-IN-ONE LÖSUNG**
 
+🔥 **Spezialisiert für Viessmann Vitotronic 300!** Siehe [VITOTRONIC_300.md](VITOTRONIC_300.md) für Vitotronic 300 spezifische Anleitung.
+
 Diese Integration ermöglicht es dir, deine Viessmann-Heizung über Home Assistant zu überwachen und zu steuern:
 - ✅ **Voll integriert**: vcontrold läuft automatisch in Home Assistant
 - ✅ **Keine externe Installation**: Alles out-of-the-box
 - ✅ **Lokal verarbeitet**: Kein Cloud-Upload, kein ViCare Account
 - ✅ **Einfaches Setup**: Config Flow mit wenigen Klicks
+- ✅ **Vitotronic 300 optimiert**: Spezialisierte Konfiguration für dein Modell
 
 ## 🎯 Features
 
